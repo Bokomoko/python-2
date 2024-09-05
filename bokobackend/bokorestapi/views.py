@@ -1,19 +1,37 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from . import models, serializers
 
 
-# Create your views here.
-def post(self, request: Request):
+class PersonViewset(APIView):
     """
-    add new person to the database
+    Viewset for Person model
     """
-    serializer = serializers.PersonSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {"status": "success", "data": serializer.data},
-            status=status.HTTP_200_OK,
-        )
-    return Response(
-        {"status": "error", "data": serializer.errors},
-        status=status.HTTP_400_BAD_REQUEST,
-    )
+
+    def get(self, request, id=None):
+      """
+      gets a single person by id or a list of persons if no id is given
+      """
+      if id:
+          item = models.Person.objects.get(id=id)
+          serializer = serializers.PersonSerializer(item)
+          return Response(
+              {
+                  "status": "success",
+                  "data": serializer.data
+              },
+              status=status.HTTP_200_OK
+          )
+      list_of_persons = models.Person.objects.all()
+      serializer = serializers.PersonSerializer(
+          list_of_persons, many=True)
+      return Response(
+          {"status": "success",
+            "data": serializer.data
+            },
+          status=status.HTTP_200_OK
+      )
